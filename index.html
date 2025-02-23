@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="./leaflet/leaflet.css" integrity="" crossorigin=""/>
+   <style>
+      #mymap { height: 640px; width: 640px;}
+   </style>
+  <title>GPX Dateien - Motorrad</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+ <div id="mymap"></div>
+<form name="formular" action="">
+  <p>Welche Motorrad-Tour im Schwarzwald soll anzeigt werden?</p>
+  <p>
+    <label for="tour">Tour:</label>
+    <select name="tour" id="tour" size=1>
+      <option value="-">Bitte wählen</option>
+      <option value="tour1">Historisch wertvoll</option>
+      <option value="tour2">Breisgau intensiv</option>
+      <option value="tour3">Tour im Norden des Schwarzwalds</option>
+    </select>
+  </p>
+  <p>Durch ein Klick auf einer Start-/ Zielfahne wird die Länge in Kilometern und die Bezeichnung der Tour angezeigt.</p>
+</form>
+<button type='button' id='FensterSchliessen'>> Fenster schließen</button>
+<!-- Make sure you put this AFTER Leaflet's CSS -->
+<script src="./leaflet/leaflet.js" integrity="sha256-JOnsZs28NnzfQkVhxtJmqdalYkF/ejmYWXD//vFzgWA=" crossorigin=""></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.4.0/gpx.min.js"></script>
+ <script>
+ function clearMap() {
+    for(i in mymap._layers) {
+        if(mymap._layers[i]._path != undefined) {
+            try {
+                mymap.removeLayer(mymap._layers[i]);
+            }
+            catch(e) {
+                console.log("problem with " + e + mymap._layers[i]);
+            }
+        }
+    }
+}
+  // Creating the map and tiles
+  const mymap = L.map('mymap').setView([47.996280, 8.00160], 9);
+  const attribution = 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>';
+
+  const tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+  const tiles = L.tileLayer(tileUrl,{ attribution });
+  tiles.addTo(mymap);
+
+  $('select[name="tour"]').change(function() {
+    //  alert($(this).val());
+
+  var gpx = $(this).val() + '.gpx'; // URL to your GPX file or the GPX itself
+
+  if($(this).val()=="-") {
+    clearMap();
+  }
+else {
+  clearMap();
+  new L.GPX(gpx, {
+    async: true,
+    marker_options: {
+      startIconUrl: './leaflet/images/pin-icon-start.png',
+      endIconUrl: './leaflet/images/pin-icon-end.png',
+      shadowUrl: './leaflet/images/pin-shadow.png',
+      iconAnchor: [2, 46]
+    },
+    polyline_options: { color: '#1c8e05' }
+  }).on('loaded', function(e) {
+    mymap.fitBounds(e.target.getBounds());
+
+    var gpxtmp = e.target;
+    var distM = gpxtmp.get_distance();
+    var distKM = (distM/1000).toFixed(2);
+
+    var namedertour = gpx;
+    namedertour = gpx.substring(0, namedertour.length-4);
+    namedertour = namedertour[0].toUpperCase() + namedertour.substr(1);
+    var info = 'Bezeichnung der Tour: <strong>'+ namedertour + '</strong><br />'+
+               'Distanz: '+ distKM + ' km';
+    gpxtmp.bindPopup(info);
+
+  }).addTo(mymap);
+  console.log(L);
+}
+  });
+
+  document.getElementById('FensterSchliessen').addEventListener('click', function () {
+      window.close();
+      //alert();
+  });
+
+ </script>
+</body>
+</html>
